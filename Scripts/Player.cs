@@ -1,0 +1,117 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class Player : MonoBehaviour
+{
+    public static Player instance;
+    public Vector2 inputVec;
+    RunTimeStat Rstat;
+    PlayerStat Pstat;
+    public Scanner scanner;
+    Rigidbody2D rigid;
+    public BoxCollider2D AreaColl;
+    SpriteRenderer spriter;
+
+    public int level,exp;
+    public float hp;
+    public int nextExp;
+
+    //public Weapon StartWeapon;
+    //public ItemData StartItemData;
+
+    Animator anim;
+
+    void InitStat()
+    {
+        nextExp = Pstat.BaseData.ExpTerm;
+        Pstat.Init();
+        Pstat.RecalculateStats();
+        hp = Pstat.MaxHealth;
+        level = 0;
+    }
+    public void GetExp(int ExpData)
+    {
+        exp += ExpData;
+
+        if (exp >= nextExp)
+        {
+            level++;
+            exp = 0;
+            GameManager.instance.uiLevelUp.Show();
+        }
+    }
+    void Start()
+    {
+        Rstat = RunTimeStat.instance;
+        Pstat = PlayerStat.instance;
+        InitStat();
+        AreaColl = GameObject.FindGameObjectWithTag("Area").transform.GetComponent<BoxCollider2D>();
+    }
+
+    void Awake()
+    {
+        rigid = GetComponent<Rigidbody2D>();
+        spriter = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
+        scanner = GetComponent<Scanner>();
+        instance = this;
+    }
+    void Update()
+    {
+        inputVec.x = Input.GetAxisRaw("Horizontal");
+        inputVec.y = Input.GetAxisRaw("Vertical");
+    }
+    private void FixedUpdate()
+    {
+        Vector2 nextVec = inputVec.normalized * Pstat.Move_Speed * Time.fixedDeltaTime;
+        rigid.MovePosition(rigid.position + nextVec);
+    }
+
+    private void LateUpdate()
+    {
+        anim.SetFloat("Speed", inputVec.magnitude);
+        if(inputVec.x != 0)
+        {
+            spriter.flipX = inputVec.x < 0;
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (!GameManager.instance.bisLive)
+            return;
+
+        spriter.color = new Color(255, 175, 121);
+        int Edamage = collision.transform.GetComponent<Enemy>().Damage;
+        hp -= Time.deltaTime * Edamage;
+        if (GameData.showPD)
+        {
+            Vector3 pos = transform.position + Vector3.up * 1f + (Vector3)Random.insideUnitCircle * 0.3f;
+            GameObject damObject = PoolManager.instance.GetGO((int)Define.PoolType.Damage);
+            damObject.transform.position = pos;
+            damObject.GetComponent<DamageText>().Init(Edamage,true);
+        }
+        DeadSequence();
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (!GameManager.instance.bisLive)
+            return;
+
+        spriter.color = Color.white;
+    }
+
+    public void DeadSequence()
+    {
+        if (hp <= 0.001)
+        {
+            for (int i = 2; i < transform.childCount; i++)
+            {
+                transform.GetChild(i).gameObject.SetActive(false);
+            }
+            GameManager.instance.GameEndSequnce();
+            anim.SetTrigger("Dead");
+        }
+    }
+}

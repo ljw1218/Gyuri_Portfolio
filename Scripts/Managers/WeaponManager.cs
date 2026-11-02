@@ -1,0 +1,37 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WeaponManager : MonoBehaviour
+{
+    public static WeaponManager instance;
+    private Dictionary<WeaponItemData, Weapon> WeaponDict = new();
+
+    void Awake()
+    {
+        instance = this;
+    }
+    public void AddWeapon(WeaponItemData data)
+    {
+        GameObject weapon = Instantiate(data.Target);
+        weapon.transform.SetParent(transform,false);
+        weapon.transform.localPosition = Vector3.zero;
+        WeaponDict.Add(data, weapon.GetComponent<Weapon>());
+        ChangeAlpha();
+    }
+    public void LevelUpWeapon(WeaponItemData data)
+    {
+        Weapon weapon = WeaponDict[data];
+        weapon.ItemLevelUp();
+    }
+
+    public void SetActive(WeaponItemData data)
+    {
+        Weapon weapon = WeaponDict[data];
+        weapon.SetActive();
+    }
+    public void ChangeAlpha()
+    {
+        foreach (Weapon w in WeaponDict.Values)
+            w.OnChangeEffectValue();
+    }
+}

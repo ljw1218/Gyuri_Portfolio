@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45d9753f2cca13b42ace8a5c158499ec, type: 3}
+  m_Name: W_Pipe
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponItemData
+  itemId: 0
+  itemName: "\uD30C\uC774\uD504"
+  itemDesc: "\uB0B4\uB824\uCC0D\uC73C\uBA74 \uBA38\uB9AC\uAC00 \uC6C0\uD479 \uD30C\uC77C\uAC83
+    \uAC19\uC740 \uD30C\uC774\uD504\uC774\uB2E4.\n\uACF5\uACA9\uB825 (40 / 60 / 80)"
+  itemIcon: {fileID: 21300000, guid: 268c2db0ee36e964abc28d54c4bc587c, type: 3}
+  maxLevel: 3
+  type: 0
+  attackTerm: 1.5
+  baseDamage: 40
+  baseCount: 1
+  damages: 280000003c00000050000000
+  counts: 
+  Target: {fileID: 5557251037089192464, guid: edddb29395181ca40836d11f2f519251, type: 3}

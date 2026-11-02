@@ -1,0 +1,140 @@
+using System.Collections;
+using UnityEngine;
+
+public class Enemy : MonoBehaviour
+{
+    public float speed;
+    public int maxHealth;
+    public int health;
+    public int Damage;
+    protected Rigidbody2D target;
+    protected CoinData coindata;
+    protected Vector2 dirVec;
+
+    public bool bIsLive;
+    public bool bIsBoss;
+    protected MonsterData.SpawnPatternType mType;
+
+    protected Rigidbody2D rigid;
+    protected Collider2D coll;
+    protected SpriteRenderer spriter;
+    protected Animator anim;
+    
+    protected virtual void Awake()
+    {
+        rigid = GetComponent <Rigidbody2D>();
+        spriter = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
+        coll = GetComponent<Collider2D>();
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        target = player.GetComponent<Rigidbody2D>();
+    }
+
+    void FixedUpdate()
+    {
+        if (!bIsLive || anim.GetCurrentAnimatorStateInfo(0).IsName("Hit"))
+            return;
+        
+        dirVec = target.position - rigid.position;
+        Vector2 nextVec = dirVec.normalized * speed * Time.fixedDeltaTime;
+        rigid.MovePosition(rigid.position + nextVec);
+        rigid.linearVelocity = Vector2.zero;
+    }
+    private void LateUpdate()
+    {
+        if (!bIsLive)
+            return;
+        
+        spriter.flipX = target.position.x < rigid.position.x;
+    }
+    
+    void OnEnable()
+    {
+        target = Player.instance.GetComponent<Rigidbody2D>();
+        bIsLive = true;
+        health = maxHealth;
+        coll.enabled = true;
+        rigid.simulated = true;
+        spriter.sortingOrder = 2;
+        anim.SetBool("Dead", false);
+    }
+
+    public void Init(MonsterData data)
+    {
+        speed = data.Speed;
+        maxHealth = data.MaxHealth;
+        health = data.MaxHealth;
+        bIsBoss = data.isBoss;
+        coindata = data.Coin;
+        Damage = data.Damage;
+        mType = data.patternType;
+        coindata = data.Coin;
+        anim.runtimeAnimatorController = data.AnimCon;
+        spriter.color = Color.white;
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+    }
+
+    public virtual void HitAction(int rDamage)
+    {
+        health -= rDamage;
+        StartCoroutine(KnockBack());
+        float fvalue = (float)health / maxHealth;
+        if (bIsBoss)
+            Spawner.instance.UpdateBossSlider(fvalue);
+
+        if (GameData.showED)
+        {
+            Vector3 pos = transform.position + Vector3.up * 1f + (Vector3)Random.insideUnitCircle * 0.3f;
+            GameObject damObject = PoolManager.instance.GetGO((int)Define.PoolType.Damage);
+            damObject.transform.position = pos;
+            damObject.GetComponent<DamageText>().Init(rDamage, false);
+        }
+
+        if (health <= 0)
+        {
+            bIsLive = false;
+            coll.enabled = false;
+            rigid.simulated = false;
+            spriter.sortingOrder = 1;
+            anim.SetBool("Dead", true);
+            StartCoroutine(Dead());
+            CreateCoin();
+            //GameManager.instance.kill++;
+            //GameManager.instance.GetExp(coindata);
+        }
+        else
+        {
+            anim.SetTrigger("Hit");
+        }
+    }
+    void CreateCoin()
+    {
+        GameObject coin = GameManager.instance.pool.GetGO((int)Define.PoolType.Coin);
+        coin.transform.position = transform.position;
+        CoinPickup pickup = coin.GetComponent<CoinPickup>();
+        pickup.Init(coindata);
+    }
+    IEnumerator KnockBack()
+    {
+        yield return new WaitForFixedUpdate();
+        Vector3 playerPos = Player.instance.transform.position;
+        Vector3 dirVec = (transform.position - playerPos).normalized;
+        rigid.AddForce(dirVec.normalized * 3, ForceMode2D.Impulse);
+    }
+
+    private IEnumerator Dead()
+    {
+        yield return new WaitForSeconds(0.2f);
+        gameObject.SetActive(false);
+        if(bIsBoss == true)
+        {
+            GameManager.instance.bisClear = true;
+            GameManager.instance.GameEndSequnce();
+        }
+        yield return null;
+    }
+
+}
